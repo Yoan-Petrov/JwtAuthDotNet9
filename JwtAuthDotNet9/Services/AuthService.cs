@@ -13,7 +13,7 @@ namespace JwtAuthDotNet9.Services
 {
     public class AuthService(UserDbContext context, IConfiguration configuration) : IAuthService
     {
-        public async Task<TokenResponseDto?> LoginAsync(UserDto request)
+        public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user is null)
@@ -42,17 +42,22 @@ namespace JwtAuthDotNet9.Services
         {
             if (await context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                return null;    
+                return null;
             }
-            var user = new User();
-            var hashedPassword = new PasswordHasher<User>()
+
+            var user = new User
+            {
+                Email = request.Email,
+                FirstName = request.FirstName,  // Added
+                LastName = request.LastName,    // Added
+                Role = "User"                   // Default role
+            };
+
+            user.PasswordHash = new PasswordHasher<User>()
                 .HashPassword(user, request.PasswordHash);
 
-            user.Email = request.Email;
-            user.PasswordHash = hashedPassword;
-
             context.Users.Add(user);
-            await context.SaveChangesAsync();   
+            await context.SaveChangesAsync();
             return user;
         }
 

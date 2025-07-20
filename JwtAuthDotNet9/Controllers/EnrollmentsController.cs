@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using JwtAuthDotNet9.Models;
 
 namespace JwtAuthDotNet9.Controllers
 {
@@ -40,56 +41,60 @@ namespace JwtAuthDotNet9.Controllers
             return Ok(enrollment);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Unenroll(int id)
+        [HttpDelete("unenroll")]
+        [Authorize(Roles = "Admin,Trainer")] // Restrict to privileged roles
+        public async Task<IActionResult> Unenroll([FromQuery] Guid userId, [FromQuery] int courseId)
         {
-            var enrollment = await context.Enrollments.FindAsync(id);
-            if (enrollment == null) return NotFound();
+            // 1. Find the specific enrollment
+            var enrollment = await context.Enrollments
+                .Where(e => e.UserId == userId && e.CourseId == courseId)
+                .FirstOrDefaultAsync();
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (enrollment.UserId.ToString() != userId)
-                return Forbid();
+            if (enrollment == null)
+                return NotFound("Enrollment not found");
 
+            // 2. Efficient deletion without loading full entity
             context.Enrollments.Remove(enrollment);
             await context.SaveChangesAsync();
+
             return NoContent();
         }
-        [HttpGet("my-courses")]
-        public async Task<ActionResult<IEnumerable<Course>>> GetMyCourses()
-        {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-            var courses = await context.Enrollments
-                .Where(e => e.UserId == userId)
-                .Include(e => e.Course)
-                .ThenInclude(c => c.Trainer)
-                .Select(e => e.Course)
-                .ToListAsync();
-
-            return Ok(courses);
-        }
         [HttpPost("admin-enroll")]
         [Authorize(Roles = "Admin,Trainer")]
         public async Task<IActionResult> AdminEnroll(Guid userId, int courseId)
         {
-            var course = await context.Courses.FindAsync(courseId);
-            if (course == null) return NotFound("Course not found");
+            // 1. Check if user and course exist
+            if (!await context.Users.AnyAsync(u => u.Id == userId))
+                return NotFound("User not found");
 
-            var existingEnrollment = await context.Enrollments
-                .FirstOrDefaultAsync(e => e.CourseId == courseId && e.UserId == userId);
+            if (!await context.Courses.AnyAsync(c => c.Id == courseId))
+                return NotFound("Course not found");
 
-            if (existingEnrollment != null)
-                return BadRequest("User already enrolled in this course");
+            // 2. Check for existing enrollment
+            if (await context.Enrollments.AnyAsync(e =>
+                e.UserId == userId && e.CourseId == courseId))
+                return BadRequest("Already enrolled");
 
+            // 3. Create and save
             var enrollment = new Enrollment
             {
-                CourseId = courseId,
-                UserId = userId
+                UserId = userId,
+                CourseId = courseId
+                // EnrollmentDate auto-set
             };
 
             context.Enrollments.Add(enrollment);
             await context.SaveChangesAsync();
-            return Ok(enrollment);
+
+            // 4. Return just the essential data
+            return Ok(new
+            {
+                enrollment.Id,
+                enrollment.UserId,
+                enrollment.CourseId,
+                enrollment.EnrollmentDate
+            });
         }
 
     }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace JwtAuthDotNet9.Entities
 {
@@ -18,6 +19,7 @@ namespace JwtAuthDotNet9.Entities
         public Guid TrainerId { get; set; }
 
         public User Trainer { get; set; }
+        [JsonIgnore]
         public List<Enrollment> Enrollments { get; set; } = new();
     }
 }

@@ -25,10 +25,16 @@ namespace JwtAuthDotNet9.Controllers
             if (user is null)
                 return BadRequest("Username already exists");
 
-            return Ok(user);
+            return Ok(new
+            {
+                user.Id,
+                user.Email,
+                user.FirstName,
+                user.LastName
+            });
         }
         [HttpPost("login")]
-        public async Task<ActionResult<TokenResponseDto>> Login(UserDto request)
+        public async Task<ActionResult<TokenResponseDto>> Login(LoginDto request)
         {
             var result = await authService.LoginAsync(request);
             if (result is null)
