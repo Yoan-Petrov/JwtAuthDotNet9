@@ -43,9 +43,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<LocalFileService>();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
 
+    // Use ContentRootPath if WebRootPath is null
+    var rootPath = env.WebRootPath ?? env.ContentRootPath;
+    var uploadsPath = Path.Combine(rootPath, "uploads");
+
+    // Create directory if it doesn't exist
+    if (!Directory.Exists(uploadsPath))
+    {
+        Directory.CreateDirectory(uploadsPath);
+    }
+}
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

@@ -21,5 +21,7 @@ namespace JwtAuthDotNet9.Entities
         public User Trainer { get; set; }
         [JsonIgnore]
         public List<Enrollment> Enrollments { get; set; } = new();
+        public List<CourseMaterial> Materials { get; set; } = new List<CourseMaterial>();
+
     }
 }
