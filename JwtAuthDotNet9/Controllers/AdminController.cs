@@ -1,8 +1,8 @@
 ﻿using JwtAuthDotNet9.Data;
+using JwtAuthDotNet9.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-//...
+
 namespace JwtAuthDotNet9.Controllers
 {
     [Authorize(Roles = "Admin")]
@@ -23,11 +23,5 @@ namespace JwtAuthDotNet9.Controllers
             await context.SaveChangesAsync();
             return Ok();
         }
-    }
-
-    public class AssignRoleDto
-    {
-        public Guid UserId { get; set; }
-        public string Role { get; set; }
     }
 }

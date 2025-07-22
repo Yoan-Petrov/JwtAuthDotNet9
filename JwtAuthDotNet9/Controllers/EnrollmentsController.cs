@@ -1,11 +1,10 @@
 ﻿using JwtAuthDotNet9.Data;
 using JwtAuthDotNet9.Entities;
+using JwtAuthDotNet9.Models;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using JwtAuthDotNet9.Models;
+using System.Security.Claims;
 
 namespace JwtAuthDotNet9.Controllers
 {
@@ -96,7 +95,27 @@ namespace JwtAuthDotNet9.Controllers
                 enrollment.EnrollmentDate
             });
         }
+        [HttpGet("my-courses")]
+        public async Task<ActionResult<IEnumerable<CourseDto>>> GetMyCourses()
+        {
+            // 1. Extract user ID from the JWT token
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null || !Guid.TryParse(userId, out var userGuid))
+                return Unauthorized();
 
+            // 2. Query enrollments and include course details
+            var enrolledCourses = await context.Enrollments
+                .Where(e => e.UserId == userGuid)
+                .Include(e => e.Course) // Ensure Course is included
+                .Select(e => new CourseDto
+                {
+                    Title = e.Course.Title,
+                    Description = e.Course.Description,
+                })
+                .ToListAsync();
+
+            return Ok(enrolledCourses);
+        }
     }
 
 }

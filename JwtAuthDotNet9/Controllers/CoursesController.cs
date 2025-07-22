@@ -1,11 +1,10 @@
-﻿using JwtAuthDotNet9.Entities;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using JwtAuthDotNet9.Data;
+using JwtAuthDotNet9.Entities;
 using JwtAuthDotNet9.Models;
-using JwtAuthDotNet9.Data;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace JwtAuthDotNet9.Controllers
 {
@@ -29,27 +28,39 @@ namespace JwtAuthDotNet9.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Trainer")]
-        public async Task<ActionResult<Course>> CreateCourse(CourseDto courseDto)
+        public async Task<ActionResult<CourseDto>> CreateCourse(CreateCourseDto createCourseDto)
         {
             var trainerId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
             var course = new Course
             {
-                Title = courseDto.Title,
-                Description = courseDto.Description,
+                Title = createCourseDto.Title,
+                Description = createCourseDto.Description,
                 TrainerId = trainerId
             };
 
             context.Courses.Add(course);
             await context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, course);
+            // Return the full CourseDto with the generated ID
+            return CreatedAtAction(nameof(GetCourse), new { id = course.Id },
+                new CourseDto
+                {
+                    Id = course.Id,  // Now the client sees the correct DB-generated ID
+                    Title = course.Title,
+                    Description = course.Description
+                });
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Trainer")]
         public async Task<IActionResult> UpdateCourse(int id, CourseDto courseDto)
         {
+            if (id != courseDto.Id)
+            {
+                return BadRequest("Route ID does not match course ID");
+            }
+
             var course = await context.Courses.FindAsync(id);
             if (course == null) return NotFound();
 
@@ -57,6 +68,7 @@ namespace JwtAuthDotNet9.Controllers
             if (course.TrainerId.ToString() != userId)
                 return Forbid();
 
+            course.Id = courseDto.Id;
             course.Title = courseDto.Title;
             course.Description = courseDto.Description;
 
@@ -79,11 +91,5 @@ namespace JwtAuthDotNet9.Controllers
             await context.SaveChangesAsync();
             return NoContent();
         }
-    }
-
-    public class CourseDto
-    {
-        public string Title { get; set; }
-        public string Description { get; set; }
     }
 }
