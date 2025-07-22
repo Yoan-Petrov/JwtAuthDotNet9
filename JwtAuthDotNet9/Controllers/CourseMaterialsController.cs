@@ -2,11 +2,9 @@
 using JwtAuthDotNet9.Entities;
 using JwtAuthDotNet9.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Hosting; 
-using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace JwtAuthDotNet9.Controllers
 {
@@ -68,7 +66,44 @@ namespace JwtAuthDotNet9.Controllers
             var contentType = _fileService.GetFileContentType(material.FilePath);
             return PhysicalFile(fullPath, contentType, material.Title + Path.GetExtension(fullPath));
         }
+        [HttpDelete("{materialId}")]
+        public async Task<IActionResult> DeleteMaterial(int courseId, int materialId)
+        {
+            // 1. Find the material
+            var material = await _context.CourseMaterials
+                .FirstOrDefaultAsync(m => m.Id == materialId && m.CourseId == courseId);
 
+            if (material == null)
+                return NotFound("Material not found");
+
+            // 2. Verify course ownership (if needed)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var course = await _context.Courses.FindAsync(courseId);
+
+            if (course?.TrainerId.ToString() != userId && !User.IsInRole("Admin"))
+                return Forbid();
+
+            try
+            {
+                // 3. Delete physical file
+                var rootPath = _env.WebRootPath ?? _env.ContentRootPath;
+                var fullPath = Path.Combine(rootPath, material.FilePath);
+
+                if (System.IO.File.Exists(fullPath))
+                    System.IO.File.Delete(fullPath);
+
+                // 4. Remove database record
+                _context.CourseMaterials.Remove(material);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Log the error (consider using ILogger)
+                return StatusCode(500, "Failed to delete material: " + ex.Message);
+            }
+        }
         // Added this new endpoint for material metadata
         [HttpGet("{materialId}/metadata")]
         public async Task<ActionResult<CourseMaterial>> GetMaterial(int courseId, int materialId)
