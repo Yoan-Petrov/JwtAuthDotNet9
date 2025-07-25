@@ -1,13 +1,13 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using JwtAuthDotNet9.Data;
+﻿using JwtAuthDotNet9.Data;
 using JwtAuthDotNet9.Entities;
 using JwtAuthDotNet9.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace JwtAuthDotNet9.Services
 {
@@ -83,9 +83,9 @@ namespace JwtAuthDotNet9.Services
         private string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
-            using var rng =  RandomNumberGenerator.Create();
+            using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);  
+            return Convert.ToBase64String(randomNumber);
         }
         private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
         {
@@ -93,7 +93,7 @@ namespace JwtAuthDotNet9.Services
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await context.SaveChangesAsync();
-            return refreshToken;    
+            return refreshToken;
         }
         private string CreateToken(User user)
         {
@@ -101,8 +101,7 @@ namespace JwtAuthDotNet9.Services
             {
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Role, user.Role),  
-
+                new Claim(ClaimTypes.Role, user.Role),
             };
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!));

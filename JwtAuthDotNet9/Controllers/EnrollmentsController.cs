@@ -44,7 +44,6 @@ namespace JwtAuthDotNet9.Controllers
         [Authorize(Roles = "Admin,Trainer")] // Restrict to privileged roles
         public async Task<IActionResult> Unenroll([FromQuery] Guid userId, [FromQuery] int courseId)
         {
-            // 1. Find the specific enrollment
             var enrollment = await context.Enrollments
                 .Where(e => e.UserId == userId && e.CourseId == courseId)
                 .FirstOrDefaultAsync();
@@ -109,8 +108,9 @@ namespace JwtAuthDotNet9.Controllers
                 .Include(e => e.Course) // Ensure Course is included
                 .Select(e => new CourseDto
                 {
+                    Id = e.Course.Id, // Add this line
                     Title = e.Course.Title,
-                    Description = e.Course.Description,
+                    Description = e.Course.Description
                 })
                 .ToListAsync();
 

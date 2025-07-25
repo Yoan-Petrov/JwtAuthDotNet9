@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JwtAuthDotNet9.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20250722081638_initiall")]
-    partial class initiall
+    [Migration("20250725191226_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

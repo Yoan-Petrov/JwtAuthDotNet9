@@ -1,21 +1,17 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+﻿using JwtAuthDotNet9.Data;
 using JwtAuthDotNet9.Entities;
 using JwtAuthDotNet9.Models;
 using JwtAuthDotNet9.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace JwtAuthDotNet9.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService authService) : ControllerBase
+    public class AuthController(IAuthService authService, UserDbContext context) : ControllerBase
     {
 
         [HttpPost("register")]
@@ -23,7 +19,7 @@ namespace JwtAuthDotNet9.Controllers
         {
             var user = await authService.RegisterAsync(request);
             if (user is null)
-                return BadRequest("Username already exists");
+                return BadRequest("Email already in use");
 
             return Ok(new
             {
@@ -45,12 +41,29 @@ namespace JwtAuthDotNet9.Controllers
         [HttpPost("refresh-token")]
         public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)
         {
-            var result = await authService.RefreshTokensAsync(request); 
-            if(result is null || result.AccessToken is null || result.RefreshToken is null)
+            var result = await authService.RefreshTokensAsync(request);
+            if (result is null || result.AccessToken is null || result.RefreshToken is null)
                 return Unauthorized("Invalid refresh token.");
-            return Ok(result);  
+            return Ok(result);
         }
 
+        [HttpGet("get-role")]
+        [Authorize] // Requires valid token
+        public async Task<ActionResult<string>> GetUserRole()
+        {
+            // Get user ID from the token
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            // Query database for role
+            var user = await context.Users
+                .Where(u => u.Id == Guid.Parse(userId))
+                .Select(u => new { u.Role })
+                .FirstOrDefaultAsync();
+
+            return user?.Role ?? "User"; // Default to "User" if not found
+        }
         [Authorize]
         [HttpGet]
         public IActionResult AuthenticatedOnlyEndpoint()
@@ -69,6 +82,12 @@ namespace JwtAuthDotNet9.Controllers
         public IActionResult TrainerOnlyEndpoint()
         {
             return Ok("You are trainer!");
+        }
+        [Authorize(Roles = "User")]
+        [HttpGet("user-only")]
+        public IActionResult UserOnlyEndpoint()
+        {
+            return Ok("You are a valid User!");
         }
     }
 }

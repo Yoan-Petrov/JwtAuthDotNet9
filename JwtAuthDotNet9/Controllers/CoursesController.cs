@@ -14,9 +14,18 @@ namespace JwtAuthDotNet9.Controllers
     public class CoursesController(UserDbContext context) : ControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCourses()
+        public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourses()
         {
-            return await context.Courses.Include(c => c.Trainer).ToListAsync();
+            return await context.Courses
+                .Where(c => c.Title != null) // Filter NULL records
+                .Select(c => new CourseDto
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    Description = c.Description
+                    // Trainer intentionally excluded
+                })
+                .ToListAsync();
         }
 
         [HttpGet("{id}")]

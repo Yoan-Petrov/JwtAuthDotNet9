@@ -9,5 +9,6 @@ namespace JwtAuthDotNet9.Models
 
         [Required]
         public string PasswordHash { get; set; }
+
     }
 }

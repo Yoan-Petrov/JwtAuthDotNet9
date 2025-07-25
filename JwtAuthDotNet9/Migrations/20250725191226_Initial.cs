@@ -51,6 +51,29 @@ namespace JwtAuthDotNet9.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CourseMaterials",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UploadDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CourseId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CourseMaterials", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CourseMaterials_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Enrollments",
                 columns: table => new
                 {
@@ -78,6 +101,11 @@ namespace JwtAuthDotNet9.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CourseMaterials_CourseId",
+                table: "CourseMaterials",
+                column: "CourseId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Courses_TrainerId",
                 table: "Courses",
                 column: "TrainerId");
@@ -91,6 +119,9 @@ namespace JwtAuthDotNet9.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "CourseMaterials");
+
             migrationBuilder.DropTable(
                 name: "Enrollments");
 
