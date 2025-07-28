@@ -1,17 +1,18 @@
-import { getTokenData } from '../utils/auth';
-import { Navigate } from 'react-router-dom';
+// In AdminDashboard.jsx
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
-  const tokenData = getTokenData();
-
-  if (tokenData?.role !== 'Admin') {
-    return <Navigate to="/login" replace />;
-  }
+  const navigate = useNavigate();
 
   return (
-    <div>
+    <div className="admin-dashboard">
       <h1>Admin Dashboard</h1>
-      <p>Welcome, {tokenData.email}!</p>
+      <button 
+        onClick={() => navigate('/users-management')} // Or '/admin/users' if using subfolder
+        className="admin-btn"
+      >
+        Manage Users
+      </button>
     </div>
   );
 }

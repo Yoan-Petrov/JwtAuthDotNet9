@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import TrainerDashboard from './pages/TrainerDashboard';
 import UserDashboard from './pages/UserDashboard';
 import Unauthorized from './components/Unauthorized';
+import UsersManagement from './pages/UsersManagement';
 
 
 function App() {
@@ -30,7 +31,10 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={['User']} />}>
           <Route path="/user-dashboard" element={<UserDashboard />} />
         </Route>
-        
+
+         <Route path="/admin" element={<AdminDashboard />} />
+<Route path="/users-management" element={<UsersManagement />} />
+
         {/* Fallback routes */}
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
