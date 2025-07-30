@@ -13,31 +13,26 @@ namespace JwtAuthDotNet9.Controllers
     [Route("api/[controller]")]
     public class EnrollmentsController(UserDbContext context) : ControllerBase
     {
-        [HttpPost]
-        public async Task<ActionResult<Enrollment>> Enroll(int courseId)
+        [HttpGet("course-enrollments")]
+        public async Task<ActionResult<IEnumerable<EnrolledUserDto>>> GetCourseEnrollments([FromQuery] int courseId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null || !Guid.TryParse(userId, out var userGuid))
-                return Unauthorized();
+            // Verify course exists
+            if (!await context.Courses.AnyAsync(c => c.Id == courseId))
+                return NotFound("Course not found");
 
-            var course = await context.Courses.FindAsync(courseId);
-            if (course == null) return NotFound("Course not found");
+            var enrollments = await context.Enrollments
+                .Where(e => e.CourseId == courseId)
+                .Include(e => e.User) // Include user details
+                .Select(e => new EnrolledUserDto
+                {
+                    UserId = e.UserId.ToString(),
+                    FullName = $"{e.User.FirstName} {e.User.LastName}",
+                    Email = e.User.Email,
+                    EnrollmentDate = e.EnrollmentDate
+                })
+                .ToListAsync();
 
-            var existingEnrollment = await context.Enrollments
-                .FirstOrDefaultAsync(e => e.CourseId == courseId && e.UserId == userGuid);
-
-            if (existingEnrollment != null)
-                return BadRequest("Already enrolled in this course");
-
-            var enrollment = new Enrollment
-            {
-                CourseId = courseId,
-                UserId = userGuid
-            };
-
-            context.Enrollments.Add(enrollment);
-            await context.SaveChangesAsync();
-            return Ok(enrollment);
+            return Ok(enrollments);
         }
 
         [HttpDelete("unenroll")]
@@ -97,24 +92,31 @@ namespace JwtAuthDotNet9.Controllers
         [HttpGet("my-courses")]
         public async Task<ActionResult<IEnumerable<CourseDto>>> GetMyCourses()
         {
-            // 1. Extract user ID from the JWT token
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null || !Guid.TryParse(userId, out var userGuid))
                 return Unauthorized();
 
-            // 2. Query enrollments and include course details
             var enrolledCourses = await context.Enrollments
                 .Where(e => e.UserId == userGuid)
-                .Include(e => e.Course) // Ensure Course is included
+                .Include(e => e.Course)
                 .Select(e => new CourseDto
                 {
-                    Id = e.Course.Id, // Add this line
+                    Id = e.Course.Id,
                     Title = e.Course.Title,
-                    Description = e.Course.Description
+                    Description = e.Course.ShortDescription, // or ShortDescription
+                                                             // Include other needed fields
                 })
                 .ToListAsync();
 
             return Ok(enrolledCourses);
+        }
+        // Updated DTO to handle GUID string
+        public class EnrolledUserDto
+        {
+            public string UserId { get; set; }  // Stored as string
+            public string FullName { get; set; }
+            public string Email { get; set; }
+            public DateTime EnrollmentDate { get; set; }
         }
     }
 

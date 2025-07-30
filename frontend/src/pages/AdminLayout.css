@@ -1,0 +1,196 @@
+/* Base Styles */
+/* Gradient Header Bar */
+.page-header-gradient {
+  display: flex;
+  height: 130px; /* Increased height */
+  width: 100%;
+  align-items: center;
+}
+
+.gradient-left {
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(90deg, #2E2E2E, #1E7A1E);
+  display: flex;
+  align-items: center;
+  padding-left: 4rem;
+}
+
+.gradient-center {
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, #1E7A1E, #86BC25);
+  display: flex;
+  align-items: center;
+  padding-left: 2rem;
+}
+
+.gradient-right {
+  width: 20%;
+  height: 100%;
+  background: linear-gradient(90deg, #86BC25, #A8E6A8);
+}
+
+.page-header-gradient h1 {
+  margin: 0;
+  font-size: 1.8rem; /* Larger text */
+  font-weight: 500;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Rest of your existing CSS remains the same */
+.admin-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'Arial', sans-serif;
+}
+
+.admin-nav {
+  background: white;
+  padding: 0.8rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+/* ... (keep all your existing nav styles) ... */
+
+.admin-content {
+  flex: 1;
+  padding: 2rem;
+  background: #f9f9f9;
+}
+.nav-logo img {
+  height: 30px;
+}
+
+/* Centered navigation links */
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.nav-link {
+  color: #2E2E2E;
+  text-decoration: none;
+  padding: 0.5rem 0;
+  position: relative;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.nav-link.active {
+  color: #86BC25;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #86BC25;
+}
+
+/* Green page header */
+.page-header {
+  background: #86BC25;
+  padding: 1rem 2rem;
+  color: white;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+/* Profile dropdown */
+.profile-dropdown {
+  position: relative;
+}
+
+.profile-btn {
+  background: none;
+  border: none;
+  color: #2E2E2E;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+.profile-btn:hover {
+  background: #f5f5f5;
+}
+
+.arrow {
+  font-size: 0.7rem;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  min-width: 150px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+/* Main Content */
+.admin-content {
+  flex: 1;
+  padding: 2rem;
+  background: #f9f9f9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-nav {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .nav-links {
+    position: static;
+    transform: none;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .profile-dropdown {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}

@@ -9,8 +9,7 @@ namespace JwtAuthDotNet9.Models
         [Required]
         [StringLength(100)]
         public string Title { get; set; }
-
-        [StringLength(500)]
+        public string ShortDescription { get; set; } // New field
         public string Description { get; set; }
 
     }

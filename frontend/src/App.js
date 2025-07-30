@@ -1,15 +1,15 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
-// Import all page components
+// Import components
 import Login from './components/Login';
-import Register from './components/Register';
-import AdminDashboard from './pages/AdminDashboard';
-import TrainerDashboard from './pages/TrainerDashboard';
-import UserDashboard from './pages/UserDashboard';
-import Unauthorized from './components/Unauthorized';
+import Register from './components/Register'; // Make sure this exists
 import UsersManagement from './pages/UsersManagement';
-
+import CourseEnrollment from './pages/CourseEnrollment';
+import CoursesView from './pages/CoursesView';
+import AdminLayout from './pages/AdminLayout';
+import TrainerDashboard from './pages/TrainerDashboard';
+import UserDashboard from './pages/UserDashboard'; // Fixed import
 
 function App() {
   return (
@@ -17,26 +17,29 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<Register />} /> {/* Register route */}
         
-        {/* Protected routes */}
+        {/* Admin routes with layout */}
         <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/manage-users" element={<UsersManagement />} />
+            <Route path="/manage-enrollments" element={<CourseEnrollment />} />
+            <Route path="/courses" element={<CoursesView />} />
+          </Route>
         </Route>
         
+        {/* Trainer protected routes */}
         <Route element={<ProtectedRoute allowedRoles={['Trainer']} />}>
           <Route path="/trainer-dashboard" element={<TrainerDashboard />} />
         </Route>
         
+        {/* User protected routes */}
         <Route element={<ProtectedRoute allowedRoles={['User']} />}>
           <Route path="/user-dashboard" element={<UserDashboard />} />
         </Route>
-
-         <Route path="/admin" element={<AdminDashboard />} />
-<Route path="/users-management" element={<UsersManagement />} />
-
-        {/* Fallback routes */}
-        <Route path="/unauthorized" element={<Unauthorized />} />
+        
+        {/* Redirects */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

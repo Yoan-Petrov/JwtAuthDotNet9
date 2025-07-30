@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace JwtAuthDotNet9.Entities
@@ -10,6 +10,7 @@ namespace JwtAuthDotNet9.Entities
 
         [Required]
         public string Title { get; set; }
+        public string? ShortDescription { get; set; } // New field
 
         public string Description { get; set; }
 

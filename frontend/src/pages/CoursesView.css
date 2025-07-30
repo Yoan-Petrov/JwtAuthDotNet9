@@ -1,0 +1,46 @@
+.courses-view {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.courses-list {
+  display: grid;
+  gap: 25px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.course-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-left: 4px solid #86BC25; /* Deloitte green */
+}
+
+.course-card h2 {
+  color: #2E2E2E;
+  margin-top: 0;
+}
+
+.view-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #2E2E2E;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  margin-top: 15px;
+  transition: background-color 0.3s;
+}
+
+.view-btn:hover {
+  background-color: #86BC25;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+}

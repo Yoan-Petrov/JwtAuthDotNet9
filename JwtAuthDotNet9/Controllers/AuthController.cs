@@ -46,7 +46,32 @@ namespace JwtAuthDotNet9.Controllers
                 return Unauthorized("Invalid refresh token.");
             return Ok(result);
         }
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // Get the current user's ID from the JWT token
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+            {
+                return Unauthorized();
+            }
 
+            // Find the user in database
+            var user = await context.Users.FindAsync(userGuid);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Invalidate the refresh token (if you're using refresh tokens)
+            user.RefreshToken = null;
+            //user.RefreshTokenExpiry = null;
+
+            await context.SaveChangesAsync();
+
+            return Ok(new { message = "Successfully logged out" });
+        }
         [HttpGet("get-role")]
         [Authorize] // Requires valid token
         public async Task<ActionResult<string>> GetUserRole()

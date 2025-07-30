@@ -22,17 +22,32 @@ namespace JwtAuthDotNet9.Controllers
                 {
                     Id = c.Id,
                     Title = c.Title,
-                    Description = c.Description
+                    ShortDescription = c.ShortDescription // Only return short desc for listings
                     // Trainer intentionally excluded
                 })
                 .ToListAsync();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(int id)
+        public async Task<ActionResult<CourseDto>> GetCourse(int id)
         {
-            var course = await context.Courses.FindAsync(id);
-            return course ?? (ActionResult<Course>)NotFound();
+            var course = await context.Courses
+                .Where(c => c.Id == id)
+                .Select(c => new CourseDto
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    ShortDescription = c.ShortDescription,
+                    Description = c.Description
+                })
+                .FirstOrDefaultAsync();
+
+            if (course == null)
+            {
+                return NotFound();
+            }
+
+            return course;
         }
 
         [HttpPost]
@@ -44,6 +59,7 @@ namespace JwtAuthDotNet9.Controllers
             var course = new Course
             {
                 Title = createCourseDto.Title,
+                ShortDescription = createCourseDto.ShortDescription,
                 Description = createCourseDto.Description,
                 TrainerId = trainerId
             };
@@ -57,6 +73,7 @@ namespace JwtAuthDotNet9.Controllers
                 {
                     Id = course.Id,  // Now the client sees the correct DB-generated ID
                     Title = course.Title,
+                    ShortDescription = course.ShortDescription,
                     Description = course.Description
                 });
         }
@@ -79,6 +96,7 @@ namespace JwtAuthDotNet9.Controllers
 
             course.Id = courseDto.Id;
             course.Title = courseDto.Title;
+            course.ShortDescription = courseDto.ShortDescription;
             course.Description = courseDto.Description;
 
             await context.SaveChangesAsync();
@@ -99,6 +117,28 @@ namespace JwtAuthDotNet9.Controllers
             context.Courses.Remove(course);
             await context.SaveChangesAsync();
             return NoContent();
+        }
+        [HttpGet("trainer-courses")]
+        [Authorize(Roles = "Trainer")]
+        public async Task<ActionResult<IEnumerable<CourseDto>>> GetCoursesByTrainer()
+        {
+            // Get trainer ID from JWT token
+            var trainerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (trainerId == null || !Guid.TryParse(trainerId, out var trainerGuid))
+                return Unauthorized();
+
+            var courses = await context.Courses
+                .Where(c => c.TrainerId == trainerGuid)
+                .Select(c => new CourseDto
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    ShortDescription = c.ShortDescription,
+                    //LessonCount = c.Lessons.Count // Assuming you have Lessons navigation property
+                })
+                .ToListAsync();
+
+            return Ok(courses);
         }
     }
 }
