@@ -3,6 +3,7 @@ import './UsersManagement.css';
 
 export default function UsersManagement() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
@@ -11,43 +12,90 @@ export default function UsersManagement() {
     surname: '',
     email: ''
   });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(5); // Users per page
 
-  useEffect(() => {
+  const [filters, setFilters] = useState({
+    role: '',
+    search: ''
+  });
+
+ useEffect(() => {
     const fetchUsers = async () => {
-  try {
-    const response = await fetch('https://localhost:7199/api/users', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
+      try {
+        const response = await fetch('https://localhost:7199/api/users', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
 
-    if (!response.ok) throw new Error('Failed to fetch users');
-    
-    const data = await response.json();
-    // Map backend fields to frontend structure
-    setUsers(data.map(user => ({
-      ...user,
-      name: user.firstName || user.FirstName || '', // Handle different casing
-      surname: user.lastName || user.LastName || ''
-    })));
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+        if (!response.ok) throw new Error('Failed to fetch users');
+        
+        const data = await response.json();
+        const formattedUsers = data.map(user => ({
+          ...user,
+          name: user.firstName || user.FirstName || '',
+          surname: user.lastName || user.LastName || ''
+        }));
+        setUsers(formattedUsers);
+        setFilteredUsers(formattedUsers);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchUsers();
   }, []);
 
+useEffect(() => {
+    let result = users;
+    
+    if (filters.role) {
+      result = result.filter(user => user.role === filters.role);
+    }
+    
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      result = result.filter(user => 
+        user.email.toLowerCase().includes(searchTerm) ||
+        (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+        (user.surname && user.surname.toLowerCase().includes(searchTerm))
+      );
+    }
+    
+    setFilteredUsers(result);
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [filters, users]);
+
+  // Pagination logic
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+
   const handleEditClick = (user) => {
-  setEditingUser(user);
-  setFormData({
-    name: user.firstName || user.FirstName || user.name || '',
-    surname: user.lastName || user.LastName || user.surname || '',
-    email: user.email
-  });
-};
+    setEditingUser(user);
+    setFormData({
+      name: user.firstName || user.FirstName || user.name || '',
+      surname: user.lastName || user.LastName || user.surname || '',
+      email: user.email
+    });
+  };
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -88,7 +136,7 @@ export default function UsersManagement() {
         } : user
       ));
       
-      setEditingUser(null); // Close modal
+      setEditingUser(null);
     } catch (err) {
       setError(err.message);
     }
@@ -116,11 +164,9 @@ export default function UsersManagement() {
       setUsers(users.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       ));
-      
     } catch (err) {
       console.error('Role change error:', err);
       setError(err.message);
-      setUsers([...users]);
     }
   };
 
@@ -138,61 +184,131 @@ export default function UsersManagement() {
       if (!response.ok) throw new Error('Delete failed');
       
       setUsers(users.filter(user => user.id !== userId));
+      // Reset to first page if current page would be empty
+      if (currentUsers.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
     } catch (err) {
       setError(err.message);
     }
   };
 
-  if (loading) return <div>Loading users...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div className="loading">Loading users...</div>;
+  if (error) return <div className="error-message">Error: {error}</div>;
 
   return (
     <div className="users-management">
-      <h1>Users Management</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Name</th>
-            <th>Surname</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-           {users.map(user => (
-    <tr key={user.id}>
-      <td>{user.email}</td>
-      <td>{user.firstName || user.FirstName || user.name}</td>
-      <td>{user.lastName || user.LastName || user.surname}</td>
-              <td>
-                <select
-                  value={user.role}
-                  onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                >
-                  <option value="User">User</option>
-                  <option value="Trainer">Trainer</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </td>
-              <td>
-                <button 
-                  className="edit-btn"
-                  onClick={() => handleEditClick(user)}
-                >
-                  Edit
-                </button>
-                <button 
-                  className="delete-btn"
-                  onClick={() => handleDelete(user.id)}
-                >
-                  Delete
-                </button>
-              </td>
+      {/* Filter Controls */}
+      <div className="filter-controls">
+        <div className="filter-group">
+          <label htmlFor="role-filter">Filter by Role:</label>
+          <select
+            id="role-filter"
+            name="role"
+            value={filters.role}
+            onChange={handleFilterChange}
+            className="filter-select"
+          >
+            <option value="">All Roles</option>
+            <option value="User">User</option>
+            <option value="Trainer">Trainer</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        
+        <div className="filter-group">
+          <label htmlFor="search-filter">Search:</label>
+          <input
+            type="text"
+            id="search-filter"
+            name="search"
+            placeholder="Search by name, surname or email"
+            value={filters.search}
+            onChange={handleFilterChange}
+            className="search-input"
+          />
+        </div>
+      </div>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Surname</th>
+              <th>Role</th>
+              <th>Actions</th>
             </tr>
+          </thead>
+          <tbody>
+            {currentUsers.map(user => (
+              <tr key={user.id}>
+                <td>{user.email}</td>
+                <td>{user.firstName || user.FirstName || user.name}</td>
+                <td>{user.lastName || user.LastName || user.surname}</td>
+                <td>
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                    className="role-select"
+                  >
+                    <option value="User">User</option>
+                    <option value="Trainer">Trainer</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </td>
+                <td className="actions-cell">
+                  <button 
+                    className="edit-btn"
+                    onClick={() => handleEditClick(user)}
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    className="delete-btn"
+                    onClick={() => handleDelete(user.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="pagination-container">
+      <div className="pagination">
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="pagination-arrow"
+        >
+          &lt; Previous
+        </button>
+        
+        <div className="page-numbers">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            <button
+              key={number}
+              onClick={() => paginate(number)}
+              className={`page-number ${currentPage === number ? 'active-page' : ''}`}
+            >
+              {number}
+            </button>
           ))}
-        </tbody>
-      </table>
+        </div>
+        
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages || totalPages === 0}
+          className="pagination-arrow"
+        >
+          Next &gt;
+        </button>
+      </div>
+    </div>
 
       {/* Edit User Modal */}
       {editingUser && (

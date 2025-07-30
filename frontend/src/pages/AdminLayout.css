@@ -2,7 +2,7 @@
 /* Gradient Header Bar */
 .page-header-gradient {
   display: flex;
-  height: 130px; /* Increased height */
+  height: 160px; /* Increased height */
   width: 100%;
   align-items: center;
 }

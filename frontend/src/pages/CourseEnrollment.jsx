@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import './CourseEnrollment.css';
+import './CoursesView.css'; // Using the same CSS file as CoursesView
 
 export default function CourseEnrollment() {
   const [courses, setCourses] = useState([]);
@@ -47,33 +47,33 @@ export default function CourseEnrollment() {
   }, []);
 
   const handleCourseSelect = async (courseId) => {
-  try {
-    const response = await fetch(
-      `https://localhost:7199/api/Enrollments/course-enrollments?courseId=${courseId}`, 
-      {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+    try {
+      const response = await fetch(
+        `https://localhost:7199/api/Enrollments/course-enrollments?courseId=${courseId}`, 
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch enrollments');
       }
-    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch enrollments');
+      const enrollments = await response.json();
+      const course = courses.find(c => c.id === courseId);
+      
+      setSelectedCourse({
+        ...course,
+        enrollments: enrollments
+      });
+    } catch (err) {
+      console.error('Error fetching enrollments:', err);
+      setError(err.message);
     }
-
-    const enrollments = await response.json();
-    const course = courses.find(c => c.id === courseId);
-    
-    setSelectedCourse({
-      ...course,
-      enrollments: enrollments
-    });
-  } catch (err) {
-    console.error('Error fetching enrollments:', err);
-    setError(err.message);
-  }
-};
+  };
 
   const handleEnroll = async (userId) => {
     try {
@@ -92,7 +92,6 @@ export default function CourseEnrollment() {
         throw new Error(errorData || 'Enrollment failed');
       }
 
-      // Refresh the enrollments after successful enrollment
       await handleCourseSelect(selectedCourse.id);
       
     } catch (err) {
@@ -103,42 +102,51 @@ export default function CourseEnrollment() {
   };
 
   const handleUnenroll = async (enrollment) => {
-  try {
-    const response = await fetch(
-      `https://localhost:7199/api/Enrollments/unenroll?userId=${enrollment.userId}&courseId=${selectedCourse.id}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+    try {
+      const response = await fetch(
+        `https://localhost:7199/api/Enrollments/unenroll?userId=${enrollment.userId}&courseId=${selectedCourse.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         }
-      }
-    );
+      );
 
-    if (!response.ok) throw new Error('Unenrollment failed');
+      if (!response.ok) throw new Error('Unenrollment failed');
 
-    // Refresh the selected course data
-    handleCourseSelect(selectedCourse.id);
-  } catch (err) {
-    setError(err.message);
-  }
-};
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+      handleCourseSelect(selectedCourse.id);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) return <div className="loading">Loading...</div>;
+  if (error) return <div className="error-message">Error: {error}</div>;
 
   return (
-    <div className="course-enrollment">
-      <h1>Manage Course Enrollments</h1>
-      
+    <div className="course-enrollment-container">
       {!selectedCourse ? (
-        <div className="course-grid">
+        <div className="courses-list">
           {courses.map(course => (
             <div 
               key={course.id} 
               className="course-card"
               onClick={() => handleCourseSelect(course.id)}
             >
-              <h3>{course.title}</h3>
-              <p>{course.description}</p>
+              <div className="course-image">
+                <img 
+                  src="/images/background.png" 
+                  alt={course.title || "Course"} 
+                />
+              </div>
+              <div className="course-content">
+                <h2>{course.title || 'Untitled Course'}</h2>
+                <p className="description">
+                  {course.description || 'No description available'}
+                </p>
+                <div className="view-btn">View Enrollments</div>
+              </div>
             </div>
           ))}
         </div>
@@ -196,9 +204,10 @@ export default function CourseEnrollment() {
                       <td>{enrollment.email}</td>
                       <td>{new Date(enrollment.enrollmentDate).toLocaleDateString()}</td>
                       <td>
-                        <button onClick={() => handleUnenroll(enrollment)}
-                            className="unenroll-btn"
-                            >
+                        <button 
+                          onClick={() => handleUnenroll(enrollment)}
+                          className="unenroll-btn"
+                        >
                           Unenroll
                         </button>
                       </td>
