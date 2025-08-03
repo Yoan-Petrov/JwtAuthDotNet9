@@ -10,7 +10,7 @@ namespace JwtAuthDotNet9.Controllers
 {
     [ApiController]
     [Route("api/courses/{courseId}/materials")]
-    [Authorize(Roles = "Trainer,Admin")]
+    [Authorize(Roles = "User,Trainer,Admin")]
     public class CourseMaterialsController : ControllerBase
     {
         private readonly UserDbContext _context;

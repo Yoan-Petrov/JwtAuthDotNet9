@@ -8,7 +8,7 @@
 }
 
 .gradient-left {
-  width: 30%;
+  width: 40%;
   height: 100%;
   background: linear-gradient(90deg, #2E2E2E, #1E7A1E);
   display: flex;
@@ -17,7 +17,7 @@
 }
 
 .gradient-center {
-  width: 50%;
+  width: 40%;
   height: 100%;
   background: linear-gradient(90deg, #1E7A1E, #86BC25);
   display: flex;
@@ -73,7 +73,15 @@
   display: flex;
   gap: 2rem;
   position: absolute;
-  left: 50%;
+  left: 30%;
+  transform: translateX(-50%);
+}
+
+.nav-links2 {
+  display: flex;
+  gap: 2rem;
+  position: absolute;
+  left: 20%;
   transform: translateX(-50%);
 }
 

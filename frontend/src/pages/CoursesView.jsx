@@ -61,8 +61,6 @@ export default function CoursesView() {
 
   return (
     <div className="courses-view">
-      <div className="header-container">
-        <h1>Courses</h1>
         <div className="search-filter">
           <input
             type="text"
@@ -72,8 +70,7 @@ export default function CoursesView() {
             className="search-input"
           />
         </div>
-      </div>
-      
+      <div className="courses-list-container">
       <div className="courses-list">
         {currentCourses.map(course => (
           <div key={course.id} className="course-card">
@@ -97,7 +94,7 @@ export default function CoursesView() {
                   : 'No description available'}
               </p>
               <Link 
-                to={`/admin/courses/${course.id}`} 
+               to={`/course/${course.id}`}  
                 className="view-btn"
               >
                 View Course
@@ -106,7 +103,7 @@ export default function CoursesView() {
           </div>
         ))}
       </div>
-
+      </div>
       {/* Pagination Controls */}
       {filteredCourses.length > 0 && (
         <div className="pagination-container">

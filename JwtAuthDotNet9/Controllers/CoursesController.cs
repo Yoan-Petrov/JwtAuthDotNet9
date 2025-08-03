@@ -80,9 +80,9 @@ namespace JwtAuthDotNet9.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Trainer")]
-        public async Task<IActionResult> UpdateCourse(int id, CourseDto courseDto)
+        public async Task<IActionResult> UpdateCourse(int id, [FromBody] CourseDto courseUpdateDto)
         {
-            if (id != courseDto.Id)
+            if (id != courseUpdateDto.Id)
             {
                 return BadRequest("Route ID does not match course ID");
             }
@@ -94,10 +94,10 @@ namespace JwtAuthDotNet9.Controllers
             if (course.TrainerId.ToString() != userId)
                 return Forbid();
 
-            course.Id = courseDto.Id;
-            course.Title = courseDto.Title;
-            course.ShortDescription = courseDto.ShortDescription;
-            course.Description = courseDto.Description;
+            // Update only the allowed fields
+            course.Title = courseUpdateDto.Title;
+            course.ShortDescription = courseUpdateDto.ShortDescription;
+            course.Description = courseUpdateDto.Description;
 
             await context.SaveChangesAsync();
             return NoContent();
@@ -119,7 +119,6 @@ namespace JwtAuthDotNet9.Controllers
             return NoContent();
         }
         [HttpGet("trainer-courses")]
-        [Authorize(Roles = "Trainer")]
         public async Task<ActionResult<IEnumerable<CourseDto>>> GetCoursesByTrainer()
         {
             // Get trainer ID from JWT token
